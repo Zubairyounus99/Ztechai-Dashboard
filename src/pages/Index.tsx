@@ -19,6 +19,7 @@ import { DashboardStats } from "@/components/DashboardStats";
 import { useAuth } from "@/context/AuthContext";
 import { UserSwitcher } from "@/components/UserSwitcher";
 import { Link } from "react-router-dom";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 const Index = () => {
   const { user } = useAuth();
@@ -74,7 +75,7 @@ const Index = () => {
   const columns = useMemo(() => getColumns(), []);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 sm:p-8">
+    <div className="min-h-screen bg-background text-foreground p-4 sm:p-8">
       <div className="container mx-auto">
         <header className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
           <div className="text-center sm:text-left">
@@ -83,7 +84,7 @@ const Index = () => {
               Your central hub for managing client relationships and projects.
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-center sm:justify-end gap-2">
             <UserSwitcher />
             {user.role === 'Admin' && (
               <Link to="/settings">
@@ -92,6 +93,7 @@ const Index = () => {
                 </Button>
               </Link>
             )}
+            <ThemeSwitcher />
           </div>
         </header>
         <main>
