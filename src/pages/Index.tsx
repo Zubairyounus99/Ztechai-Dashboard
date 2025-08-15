@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { Client } from "@/types";
+import { Client, ProjectStatus, Status } from "@/types";
 import { mockClients } from "@/data/mock";
 import { getColumns } from "@/components/columns";
 import { ClientDataTable } from "@/components/ClientDataTable";
@@ -15,8 +15,12 @@ import {
 } from "@/components/ui/dialog";
 import { ClientForm } from "@/components/ClientForm";
 import { formatISO } from "date-fns";
+import { DashboardStats } from "@/components/DashboardStats";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { UserSwitcher } from "@/components/UserSwitcher";
 
-const Index = () => {
+const Dashboard = () => {
+  const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>(() => {
     try {
       const localClients = window.localStorage.getItem("clients");
@@ -50,37 +54,57 @@ const Index = () => {
     }
   };
 
+  const handleStatusUpdate = (clientId: string, newStatus: Status | ProjectStatus, type: 'status' | 'projectStatus') => {
+    setClients(clients.map(c => 
+      c.id === clientId ? { ...c, [type]: newStatus, lastContact: formatISO(new Date()) } : c
+    ));
+  };
+
   const handleFormSubmit = (data: Client) => {
     if (editingClient) {
-      // Update existing client
       setClients(clients.map((c) => c.id === data.id ? {...data, lastContact: formatISO(new Date())} : c));
     } else {
-      // Add new client
       setClients([{ ...data, lastContact: formatISO(new Date()) }, ...clients]);
     }
     setIsDialogOpen(false);
     setEditingClient(undefined);
   };
 
-  const columns = useMemo(() => getColumns({ handleEdit, handleDelete }), [clients]);
+  const columns = useMemo(() => getColumns(), []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 sm:p-8">
       <div className="container mx-auto">
-        <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold tracking-tight">ZTechAI Client Management</h1>
-          <p className="text-xl text-muted-foreground mt-2">
-            Your central hub for managing client relationships and projects.
-          </p>
+        <header className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
+          <div className="text-center sm:text-left">
+            <h1 className="text-4xl font-bold tracking-tight">ZTechAI Client Management</h1>
+            <p className="text-xl text-muted-foreground mt-2">
+              Your central hub for managing client relationships and projects.
+            </p>
+          </div>
+          <UserSwitcher />
         </header>
         <main>
-          <div className="flex justify-end mb-4">
-            <Button onClick={handleAddNew}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add New Client
-            </Button>
+          <DashboardStats clients={clients} />
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold">Client List</h2>
+            {user.role === 'Admin' && (
+              <Button onClick={handleAddNew}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Client
+              </Button>
+            )}
           </div>
-          <ClientDataTable columns={columns} data={clients} />
+          <ClientDataTable 
+            columns={columns} 
+            data={clients} 
+            meta={{
+              handleEdit,
+              handleDelete,
+              handleStatusUpdate,
+              currentUserRole: user.role,
+            }}
+          />
         </main>
         <MadeWithDyad />
       </div>
@@ -101,6 +125,14 @@ const Index = () => {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+const Index = () => {
+  return (
+    <AuthProvider>
+      <Dashboard />
+    </AuthProvider>
   );
 };
 

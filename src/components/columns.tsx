@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Client, STATUSES, PROJECT_STATUSES } from "@/types"
+import { Client, STATUSES, PROJECT_STATUSES, Role, Status, ProjectStatus } from "@/types"
 import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,18 +11,24 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-type ColumnMeta = {
+export type ColumnMeta = {
   handleEdit: (client: Client) => void;
   handleDelete: (clientId: string) => void;
+  handleStatusUpdate: (clientId: string, newStatus: Status | ProjectStatus, type: 'status' | 'projectStatus') => void;
+  currentUserRole: Role;
 };
 
-export const getColumns = (meta: ColumnMeta): ColumnDef<Client>[] => [
+export const getColumns = (): ColumnDef<Client>[] => [
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -146,8 +152,9 @@ export const getColumns = (meta: ColumnMeta): ColumnDef<Client>[] => [
   {
     id: "actions",
     header: "",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const client = row.original
+      const meta = table.options.meta as ColumnMeta;
  
       return (
         <DropdownMenu>
@@ -159,12 +166,47 @@ export const getColumns = (meta: ColumnMeta): ColumnDef<Client>[] => [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(client.email)}>
-              Copy Email
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => meta.handleEdit(client)}>Edit Client</DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600" onClick={() => meta.handleDelete(client.id)}>Delete Client</DropdownMenuItem>
+            
+            {meta.currentUserRole === 'Admin' && (
+              <>
+                <DropdownMenuItem onClick={() => navigator.clipboard.writeText(client.email)}>
+                  Copy Email
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => meta.handleEdit(client)}>Edit Client</DropdownMenuItem>
+                <DropdownMenuItem className="text-red-600" onClick={() => meta.handleDelete(client.id)}>Delete Client</DropdownMenuItem>
+              </>
+            )}
+
+            {meta.currentUserRole === 'Employee' && (
+              <>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Update Status</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      {STATUSES.map(status => (
+                        <DropdownMenuItem key={status} onClick={() => meta.handleStatusUpdate(client.id, status, 'status')}>
+                          {status}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Update Project Status</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      {PROJECT_STATUSES.map(status => (
+                        <DropdownMenuItem key={status} onClick={() => meta.handleStatusUpdate(client.id, status, 'projectStatus')}>
+                          {status}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+              </>
+            )}
+
           </DropdownMenuContent>
         </DropdownMenu>
       )
