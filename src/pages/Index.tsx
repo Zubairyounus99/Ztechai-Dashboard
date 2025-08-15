@@ -82,6 +82,13 @@ const Index = () => {
 
   const columns = useMemo(() => getColumns(), []);
 
+  const displayedClients = useMemo(() => {
+    if (user.role === 'Admin') {
+      return clients;
+    }
+    return clients.filter(client => client.assignedTo === user.id);
+  }, [clients, user]);
+
   return (
     <div className="min-h-screen bg-background text-foreground p-4 sm:p-8">
       <div className="container mx-auto">
@@ -105,7 +112,7 @@ const Index = () => {
           </div>
         </header>
         <main>
-          <DashboardStats clients={clients} />
+          <DashboardStats clients={displayedClients} />
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">Client List</h2>
             {user.role === 'Admin' && (
@@ -117,7 +124,7 @@ const Index = () => {
           </div>
           <ClientDataTable 
             columns={columns} 
-            data={clients} 
+            data={displayedClients} 
             meta={{
               handleEdit,
               handleDelete,

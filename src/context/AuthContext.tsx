@@ -1,25 +1,22 @@
 "use client";
 
 import { createContext, useState, useContext, ReactNode } from 'react';
-import { User, Role } from '@/types';
+import { User } from '@/types';
 
-const mockUsers: Record<Role, User> = {
-  Admin: { id: '1', name: 'Admin User', role: 'Admin' },
-  Employee: { id: '2', name: 'Employee User', role: 'Employee' },
-};
+const adminUser: User = { id: '1', name: 'Admin User', role: 'Admin' };
 
 interface AuthContextType {
   user: User;
-  setUser: (role: Role) => void;
+  setUser: (user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [currentUser, setCurrentUser] = useState<User>(mockUsers.Admin);
+  const [currentUser, setCurrentUser] = useState<User>(adminUser);
 
-  const setUser = (role: Role) => {
-    setCurrentUser(mockUsers[role]);
+  const setUser = (user: User) => {
+    setCurrentUser(user);
   };
 
   return (
