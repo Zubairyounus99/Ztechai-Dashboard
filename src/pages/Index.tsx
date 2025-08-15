@@ -1,17 +1,21 @@
-// Update this page (the content is just a fallback if you fail to update the page)
-
 import { MadeWithDyad } from "@/components/made-with-dyad";
+import TodoList from "@/components/TodoList";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">
-          Start building your amazing project here!
-        </p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 sm:p-8">
+      <div className="container mx-auto">
+        <header className="text-center mb-8">
+          <h1 className="text-4xl font-bold tracking-tight">AI Agency Task Manager</h1>
+          <p className="text-xl text-muted-foreground mt-2">
+            Organize your day, track progress, and stay ahead.
+          </p>
+        </header>
+        <main>
+          <TodoList />
+        </main>
+        <MadeWithDyad />
       </div>
-      <MadeWithDyad />
     </div>
   );
 };
