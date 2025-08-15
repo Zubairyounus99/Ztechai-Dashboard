@@ -2,6 +2,41 @@ import { useAuth } from "@/context/AuthContext";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { PlusCircle, Trash2 } from "lucide-react";
+import { STATUSES, PROJECT_STATUSES, SERVICES } from "@/types";
+
+const DynamicFieldManager = ({ title, description, options }: { title: string, description: string, options: readonly string[] }) => {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {options.map(option => (
+            <div key={option} className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+              <span className="text-sm font-medium">{option}</span>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Trash2 className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </div>
+          ))}
+        </div>
+        <Separator className="my-4" />
+        <div className="flex items-center gap-2">
+          <Input placeholder="Add new option..." />
+          <Button>
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Add
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const Settings = () => {
   const { user } = useAuth();
@@ -28,20 +63,22 @@ const Settings = () => {
           Manage application-wide settings and configurations.
         </p>
       </header>
-      <main>
-        <Card>
-          <CardHeader>
-            <CardTitle>Dynamic Fields</CardTitle>
-            <CardDescription>
-              Manage the options available in dropdown menus across the application.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              This feature is coming soon! You will be able to add, edit, and delete options for fields like "Client Status" and "Project Status" right here.
-            </p>
-          </CardContent>
-        </Card>
+      <main className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <DynamicFieldManager 
+          title="Client Statuses"
+          description="Options for the client status dropdown."
+          options={STATUSES}
+        />
+        <DynamicFieldManager 
+          title="Project Statuses"
+          description="Options for the project status dropdown."
+          options={PROJECT_STATUSES}
+        />
+        <DynamicFieldManager 
+          title="Services"
+          description="Options for the services offered."
+          options={SERVICES}
+        />
       </main>
     </div>
   );

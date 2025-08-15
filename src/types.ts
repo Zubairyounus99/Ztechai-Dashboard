@@ -19,6 +19,7 @@ export const clientSchema = z.object({
   amountPaid: z.coerce.number().nonnegative().optional(),
   monthlySubscription: z.coerce.number().nonnegative().optional(),
   paymentStatus: z.enum(PAYMENT_STATUSES).optional(),
+  assignedTo: z.string().optional(), // Employee ID
 });
 
 export type Client = z.infer<typeof clientSchema>;
