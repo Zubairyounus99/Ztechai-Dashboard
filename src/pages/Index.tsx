@@ -5,7 +5,7 @@ import { mockClients } from "@/data/mock";
 import { getColumns } from "@/components/columns";
 import { ClientDataTable } from "@/components/ClientDataTable";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Settings } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,10 +16,11 @@ import {
 import { ClientForm } from "@/components/ClientForm";
 import { formatISO } from "date-fns";
 import { DashboardStats } from "@/components/DashboardStats";
-import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import { UserSwitcher } from "@/components/UserSwitcher";
+import { Link } from "react-router-dom";
 
-const Dashboard = () => {
+const Index = () => {
   const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>(() => {
     try {
@@ -82,7 +83,16 @@ const Dashboard = () => {
               Your central hub for managing client relationships and projects.
             </p>
           </div>
-          <UserSwitcher />
+          <div className="flex items-center gap-4">
+            <UserSwitcher />
+            {user.role === 'Admin' && (
+              <Link to="/settings">
+                <Button variant="outline" size="icon" aria-label="Application Settings">
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </Link>
+            )}
+          </div>
         </header>
         <main>
           <DashboardStats clients={clients} />
@@ -127,13 +137,5 @@ const Dashboard = () => {
     </div>
   );
 }
-
-const Index = () => {
-  return (
-    <AuthProvider>
-      <Dashboard />
-    </AuthProvider>
-  );
-};
 
 export default Index;
