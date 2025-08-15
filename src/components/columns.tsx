@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Client } from "@/types"
+import { Client, STATUSES, PROJECT_STATUSES } from "@/types"
 import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 type ColumnMeta = {
   handleEdit: (client: Client) => void;
@@ -25,13 +27,23 @@ export const getColumns = (meta: ColumnMeta): ColumnDef<Client>[] => [
     accessorKey: "name",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Client Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <div className="space-y-2">
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="p-0 font-semibold hover:bg-transparent"
+          >
+            Client Name
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+          <Input
+            placeholder="Filter..."
+            value={(column.getFilterValue() as string) ?? ""}
+            onChange={(event) => column.setFilterValue(event.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            className="h-8"
+          />
+        </div>
       )
     },
     cell: ({ row }) => {
@@ -46,7 +58,29 @@ export const getColumns = (meta: ColumnMeta): ColumnDef<Client>[] => [
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: ({ column }) => {
+      return (
+        <div className="space-y-2">
+          <span className="font-semibold">Status</span>
+          <Select
+            value={(column.getFilterValue() as string) ?? "all"}
+            onValueChange={(value) => column.setFilterValue(value === "all" ? undefined : value)}
+          >
+            <SelectTrigger className="h-8 w-full">
+              <SelectValue placeholder="Filter..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )
+    },
     cell: ({ row }) => {
         const status = row.getValue("status") as string;
         return <Badge variant={status === "Client" ? "default" : "secondary"}>{status}</Badge>
@@ -54,7 +88,29 @@ export const getColumns = (meta: ColumnMeta): ColumnDef<Client>[] => [
   },
   {
     accessorKey: "projectStatus",
-    header: "Project Status",
+    header: ({ column }) => {
+      return (
+        <div className="space-y-2">
+          <span className="font-semibold">Project Status</span>
+          <Select
+            value={(column.getFilterValue() as string) ?? "all"}
+            onValueChange={(value) => column.setFilterValue(value === "all" ? undefined : value)}
+          >
+            <SelectTrigger className="h-8 w-full">
+              <SelectValue placeholder="Filter..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {PROJECT_STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )
+    },
     cell: ({ row }) => {
         const projectStatus = row.getValue("projectStatus") as string;
         return <Badge variant="outline">{projectStatus}</Badge>
@@ -89,6 +145,7 @@ export const getColumns = (meta: ColumnMeta): ColumnDef<Client>[] => [
   },
   {
     id: "actions",
+    header: "",
     cell: ({ row }) => {
       const client = row.original
  
