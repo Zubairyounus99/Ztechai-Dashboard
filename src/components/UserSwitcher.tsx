@@ -1,4 +1,5 @@
-import { useAuth } from "@/context/AuthContext";
+"use client";
+
 import {
   Select,
   SelectContent,
@@ -6,20 +7,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { useAuth } from "@/context/AuthContext";
 import { Role } from "@/types";
 
-export const UserSwitcher = () => {
+export function UserSwitcher() {
   const { user, setUser } = useAuth();
 
+  const handleRoleChange = (role: Role) => {
+    setUser({ ...user, role });
+  };
+
   return (
-    <div className="flex items-center gap-2">
-      <Label htmlFor="user-role" className="text-sm font-medium">Viewing as:</Label>
-      <Select
-        value={user.role}
-        onValueChange={(value: Role) => setUser(value)}
-      >
-        <SelectTrigger id="user-role" className="w-[180px]">
+    <div className="flex items-center space-x-2">
+      <span className="text-sm font-medium text-muted-foreground">
+        Viewing as:
+      </span>
+      <Select onValueChange={handleRoleChange} value={user.role}>
+        <SelectTrigger id="user-role" className="w-auto">
           <SelectValue placeholder="Select a role" />
         </SelectTrigger>
         <SelectContent>
@@ -29,4 +33,4 @@ export const UserSwitcher = () => {
       </Select>
     </div>
   );
-};
+}
