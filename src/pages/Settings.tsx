@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { PlusCircle, Trash2 } from "lucide-react";
 import { STATUSES, PROJECT_STATUSES, SERVICES } from "@/types";
+import { EmployeeManager } from "@/components/EmployeeManager";
 
 const DynamicFieldManager = ({ title, description, options }: { title: string, description: string, options: readonly string[] }) => {
   return (
@@ -64,6 +65,7 @@ const Settings = () => {
         </p>
       </header>
       <main className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <EmployeeManager />
         <DynamicFieldManager 
           title="Client Statuses"
           description="Options for the client status dropdown."

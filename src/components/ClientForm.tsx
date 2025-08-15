@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ScrollArea } from "./ui/scroll-area";
+import { useEmployees } from "@/context/EmployeeContext";
 
 interface ClientFormProps {
   client?: Client;
@@ -15,6 +16,7 @@ interface ClientFormProps {
 }
 
 export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
+  const { employees } = useEmployees();
   const form = useForm<Client>({
     resolver: zodResolver(clientSchema),
     defaultValues: client || {
@@ -31,6 +33,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
       amountPaid: 0,
       monthlySubscription: 0,
       paymentStatus: "Pending",
+      assignedTo: undefined,
     },
   });
 
@@ -159,6 +162,29 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
                   <FormMessage />
                 </FormItem>
               )} />
+            <FormField
+              control={form.control}
+              name="assignedTo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assigned Employee</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Assign to an employee..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                      {employees.map(emp => (
+                        <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </ScrollArea>
         <div className="flex justify-end gap-2 pt-4">

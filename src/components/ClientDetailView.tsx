@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { format, parseISO } from "date-fns";
+import { useEmployees } from "@/context/EmployeeContext";
 
 interface ClientDetailViewProps {
   client: Client;
@@ -17,6 +18,9 @@ const DetailItem = ({ label, value }: { label: string; value: React.ReactNode })
 );
 
 export const ClientDetailView = ({ client }: ClientDetailViewProps) => {
+  const { employees } = useEmployees();
+  const assignedEmployee = employees.find(emp => emp.id === client.assignedTo);
+
   const formatCurrency = (amount?: number) => {
     if (amount === undefined || amount === null) return "N/A";
     return new Intl.NumberFormat("en-US", {
@@ -47,6 +51,7 @@ export const ClientDetailView = ({ client }: ClientDetailViewProps) => {
                 <DetailItem label="Client Status" value={<Badge>{client.status}</Badge>} />
                 <DetailItem label="Project Status" value={<Badge variant="outline">{client.projectStatus}</Badge>} />
                 <DetailItem label="Last Contact" value={format(parseISO(client.lastContact), "PPP")} />
+                <DetailItem label="Assigned To" value={assignedEmployee ? assignedEmployee.name : "Unassigned"} />
                 <Separator />
                 <h3 className="text-lg font-semibold mt-4">Financials</h3>
                 <DetailItem label="Design Charges" value={formatCurrency(client.designCharges)} />
