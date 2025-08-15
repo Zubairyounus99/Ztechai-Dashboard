@@ -3,13 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Pencil, Trash, Save } from "lucide-react";
-
-type Todo = {
-  id: number;
-  text: string;
-  completed: boolean;
-  createdAt: Date;
-};
+import { Todo } from "@/types";
+import { format, isPast, isToday } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface TodoItemProps {
   todo: Todo;
@@ -28,6 +24,10 @@ const TodoItem = ({ todo, toggleTodo, deleteTodo, editTodo }: TodoItemProps) => 
     setIsEditing(false);
   };
 
+  const dueDateText = todo.dueDate ? format(new Date(todo.dueDate), "PP") : null;
+  const isOverdue = todo.dueDate && isPast(new Date(todo.dueDate)) && !isToday(new Date(todo.dueDate)) && !todo.completed;
+  const isDueToday = todo.dueDate && isToday(new Date(todo.dueDate)) && !todo.completed;
+
   return (
     <div className="flex items-center gap-4 p-2 border-b">
       <Checkbox
@@ -45,12 +45,23 @@ const TodoItem = ({ todo, toggleTodo, deleteTodo, editTodo }: TodoItemProps) => 
             className="h-8"
           />
         ) : (
-          <label
-            htmlFor={`todo-${todo.id}`}
-            className={`text-sm cursor-pointer ${todo.completed ? "line-through text-muted-foreground" : ""}`}
-          >
-            {todo.text}
-          </label>
+          <div className="flex flex-col items-start">
+            <label
+              htmlFor={`todo-${todo.id}`}
+              className={`text-sm cursor-pointer ${todo.completed ? "line-through text-muted-foreground" : ""}`}
+            >
+              {todo.text}
+            </label>
+            {dueDateText && (
+              <span className={cn("text-xs font-semibold", 
+                isOverdue ? "text-red-500" : 
+                isDueToday ? "text-blue-500" : 
+                "text-muted-foreground"
+              )}>
+                {dueDateText}
+              </span>
+            )}
+          </div>
         )}
       </div>
       <div className="flex gap-1">

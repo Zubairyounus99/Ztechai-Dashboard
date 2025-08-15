@@ -3,22 +3,20 @@ import AddTodoForm from "./AddTodoForm";
 import TodoItem from "./TodoItem";
 import AiSummary from "./AiSummary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-type Todo = {
-  id: number;
-  text: string;
-  completed: boolean;
-  createdAt: Date;
-};
+import { Todo } from "@/types";
 
 const TodoList = () => {
   const [todos, setTodos] = useState<Todo[]>(() => {
     try {
       const localTodos = window.localStorage.getItem("todos");
-      return localTodos ? JSON.parse(localTodos).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})) : [
-        { id: 1, text: "Follow up with Client X", completed: false, createdAt: new Date() },
+      return localTodos ? JSON.parse(localTodos).map((t: any) => ({
+        ...t, 
+        createdAt: new Date(t.createdAt),
+        dueDate: t.dueDate ? new Date(t.dueDate) : undefined,
+      })) : [
+        { id: 1, text: "Follow up with Client X", completed: false, createdAt: new Date(), dueDate: new Date(new Date().setDate(new Date().getDate() + 2)) },
         { id: 2, text: "Review new AI model performance", completed: true, createdAt: new Date() },
-        { id: 3, text: "Schedule team sync for Project Y", completed: false, createdAt: new Date() },
+        { id: 3, text: "Schedule team sync for Project Y", completed: false, createdAt: new Date(), dueDate: new Date() },
       ];
     } catch (error) {
       console.error("Failed to parse todos from localStorage", error);
@@ -30,12 +28,13 @@ const TodoList = () => {
     window.localStorage.setItem("todos", JSON.stringify(todos));
   }, [todos]);
 
-  const addTodo = (text: string) => {
+  const addTodo = (text: string, dueDate?: Date) => {
     const newTodo: Todo = {
       id: Date.now(),
       text,
       completed: false,
       createdAt: new Date(),
+      dueDate,
     };
     setTodos([newTodo, ...todos]);
   };

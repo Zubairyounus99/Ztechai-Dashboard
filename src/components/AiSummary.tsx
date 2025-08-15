@@ -1,37 +1,42 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Lightbulb } from "lucide-react";
-
-type Todo = {
-  id: number;
-  text: string;
-  completed: boolean;
-  createdAt: Date;
-};
+import { isToday, isPast } from "date-fns";
+import { Todo } from "@/types";
 
 interface AiSummaryProps {
   todos: Todo[];
 }
 
 const AiSummary = ({ todos }: AiSummaryProps) => {
-  const today = new Date();
-  const todaysTodos = todos.filter(
-    (todo) => new Date(todo.createdAt).toDateString() === today.toDateString()
-  );
-
-  const completedCount = todaysTodos.filter((todo) => todo.completed).length;
-  const pendingCount = todaysTodos.length - completedCount;
+  const pendingTodos = todos.filter((todo) => !todo.completed);
+  const dueTodayCount = pendingTodos.filter(
+    (todo) => todo.dueDate && isToday(new Date(todo.dueDate))
+  ).length;
+  const overdueCount = pendingTodos.filter(
+    (todo) =>
+      todo.dueDate &&
+      isPast(new Date(todo.dueDate)) &&
+      !isToday(new Date(todo.dueDate))
+  ).length;
 
   let summary = "No tasks for today yet. Time to plan your day!";
+  const pendingCount = pendingTodos.length;
 
-  if (todaysTodos.length > 0) {
-    summary = `Today's focus: You have ${pendingCount} pending and ${completedCount} completed tasks.`;
+  if (todos.length > 0) {
     if (pendingCount > 0) {
-      const nextTask = todaysTodos.find((todo) => !todo.completed);
-      if (nextTask) {
-        summary += ` Your next priority could be: "${nextTask.text}".`;
+      summary = `You have ${pendingCount} pending tasks.`;
+      if (dueTodayCount > 0) {
+        summary += ` ${dueTodayCount} ${
+          dueTodayCount > 1 ? "are" : "is"
+        } due today.`;
+      }
+      if (overdueCount > 0) {
+        summary += ` ${overdueCount} ${
+          overdueCount > 1 ? "are" : "is"
+        } overdue!`;
       }
     } else {
-      summary += " Great job clearing your tasks for the day!";
+      summary = "Great job! All tasks are completed.";
     }
   }
 
