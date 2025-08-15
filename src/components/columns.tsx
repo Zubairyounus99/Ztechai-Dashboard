@@ -25,6 +25,7 @@ export type ColumnMeta = {
   handleEdit: (client: Client) => void;
   handleDelete: (clientId: string) => void;
   handleStatusUpdate: (clientId: string, newStatus: Status | ProjectStatus, type: 'status' | 'projectStatus') => void;
+  handleViewDetails: (client: Client) => void;
   currentUserRole: Role;
 };
 
@@ -52,11 +53,18 @@ export const getColumns = (): ColumnDef<Client>[] => [
         </div>
       )
     },
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
         const client = row.original;
+        const meta = table.options.meta as ColumnMeta;
         return (
-            <div className="flex flex-col">
-                <span className="font-medium">{client.name}</span>
+            <div className="flex flex-col items-start">
+                <Button
+                    variant="link"
+                    className="p-0 h-auto justify-start font-medium text-base"
+                    onClick={() => meta.handleViewDetails(client)}
+                >
+                    {client.name}
+                </Button>
                 <span className="text-sm text-muted-foreground">{client.email}</span>
             </div>
         )

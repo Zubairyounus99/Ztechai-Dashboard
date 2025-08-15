@@ -20,6 +20,7 @@ import { useAuth } from "@/context/AuthContext";
 import { UserSwitcher } from "@/components/UserSwitcher";
 import { Link } from "react-router-dom";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { ClientDetailView } from "@/components/ClientDetailView";
 
 const Index = () => {
   const { user } = useAuth();
@@ -33,8 +34,10 @@ const Index = () => {
     }
   });
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | undefined>(undefined);
+  const [viewingClient, setViewingClient] = useState<Client | undefined>(undefined);
 
   useEffect(() => {
     window.localStorage.setItem("clients", JSON.stringify(clients));
@@ -42,12 +45,17 @@ const Index = () => {
 
   const handleAddNew = () => {
     setEditingClient(undefined);
-    setIsDialogOpen(true);
+    setIsFormOpen(true);
   };
 
   const handleEdit = (client: Client) => {
     setEditingClient(client);
-    setIsDialogOpen(true);
+    setIsFormOpen(true);
+  };
+
+  const handleViewDetails = (client: Client) => {
+    setViewingClient(client);
+    setIsDetailOpen(true);
   };
 
   const handleDelete = (clientId: string) => {
@@ -68,7 +76,7 @@ const Index = () => {
     } else {
       setClients([{ ...data, lastContact: formatISO(new Date()) }, ...clients]);
     }
-    setIsDialogOpen(false);
+    setIsFormOpen(false);
     setEditingClient(undefined);
   };
 
@@ -114,6 +122,7 @@ const Index = () => {
               handleEdit,
               handleDelete,
               handleStatusUpdate,
+              handleViewDetails,
               currentUserRole: user.role,
             }}
           />
@@ -121,7 +130,7 @@ const Index = () => {
         <MadeWithDyad />
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[425px] md:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingClient ? "Edit Client" : "Add New Client"}</DialogTitle>
@@ -132,8 +141,14 @@ const Index = () => {
           <ClientForm 
             client={editingClient} 
             onSubmit={handleFormSubmit} 
-            onCancel={() => setIsDialogOpen(false)} 
+            onCancel={() => setIsFormOpen(false)} 
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="sm:max-w-[425px] md:max-w-2xl">
+          {viewingClient && <ClientDetailView client={viewingClient} />}
         </DialogContent>
       </Dialog>
     </div>
