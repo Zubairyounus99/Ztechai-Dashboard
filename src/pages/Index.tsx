@@ -5,7 +5,7 @@ import { mockClients } from "@/data/mock";
 import { getColumns } from "@/components/columns";
 import { ClientDataTable } from "@/components/ClientDataTable";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Settings } from "lucide-react";
+import { PlusCircle, Settings, LogOut } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,13 +17,13 @@ import { ClientForm } from "@/components/ClientForm";
 import { formatISO } from "date-fns";
 import { DashboardStats } from "@/components/DashboardStats";
 import { useAuth } from "@/context/AuthContext";
-import { UserSwitcher } from "@/components/UserSwitcher";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { ClientDetailView } from "@/components/ClientDetailView";
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>(() => {
     try {
       const localClients = window.localStorage.getItem("clients");
@@ -36,8 +36,12 @@ const Index = () => {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [editingClient, setEditingClient] = useState<Client | undefined>(undefined);
-  const [viewingClient, setViewingClient] = useState<Client | undefined>(undefined);
+  const [editingClient, setEditingClient] = useState<Client | undefined>(
+    undefined,
+  );
+  const [viewingClient, setViewingClient] = useState<Client | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     window.localStorage.setItem("clients", JSON.stringify(clients));
@@ -64,15 +68,27 @@ const Index = () => {
     }
   };
 
-  const handleStatusUpdate = (clientId: string, newStatus: Status | ProjectStatus, type: 'status' | 'projectStatus') => {
-    setClients(clients.map(c => 
-      c.id === clientId ? { ...c, [type]: newStatus, lastContact: formatISO(new Date()) } : c
-    ));
+  const handleStatusUpdate = (
+    clientId: string,
+    newStatus: Status | ProjectStatus,
+    type: "status" | "projectStatus",
+  ) => {
+    setClients(
+      clients.map((c) =>
+        c.id === clientId
+          ? { ...c, [type]: newStatus, lastContact: formatISO(new Date()) }
+          : c,
+      ),
+    );
   };
 
   const handleFormSubmit = (data: Client) => {
     if (editingClient) {
-      setClients(clients.map((c) => c.id === data.id ? {...data, lastContact: formatISO(new Date())} : c));
+      setClients(
+        clients.map((c) =>
+          c.id === data.id ? { ...data, lastContact: formatISO(new Date()) } : c,
+        ),
+      );
     } else {
       setClients([{ ...data, lastContact: formatISO(new Date()) }, ...clients]);
     }
@@ -80,13 +96,18 @@ const Index = () => {
     setEditingClient(undefined);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+
   const columns = useMemo(() => getColumns(), []);
 
   const displayedClients = useMemo(() => {
-    if (user.role === 'Admin') {
+    if (user?.role === "Admin") {
       return clients;
     }
-    return clients.filter(client => client.assignedTo === user.id);
+    return clients.filter((client) => client.assignedTo === user?.id);
   }, [clients, user]);
 
   return (
@@ -94,16 +115,32 @@ const Index = () => {
       <div className="container mx-auto">
         <header className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
           <div className="text-center sm:text-left">
-            <h1 className="text-4xl font-bold tracking-tight">ZTechAI Client Management</h1>
+            <h1 className="text-4xl font-bold tracking-tight">
+              ZTechAI Client Management
+            </h1>
             <p className="text-xl text-muted-foreground mt-2">
               Your central hub for managing client relationships and projects.
             </p>
           </div>
           <div className="flex items-center justify-center sm:justify-end gap-2">
-            <UserSwitcher />
-            {user.role === 'Admin' && (
+            <span className="text-sm text-muted-foreground hidden sm:inline">
+              Welcome, {user?.name}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleLogout}
+              aria-label="Logout"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+            {user?.role === "Admin" && (
               <Link to="/settings">
-                <Button variant="outline" size="icon" aria-label="Application Settings">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Application Settings"
+                >
                   <Settings className="h-5 w-5" />
                 </Button>
               </Link>
@@ -115,22 +152,22 @@ const Index = () => {
           <DashboardStats clients={displayedClients} />
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">Client List</h2>
-            {user.role === 'Admin' && (
+            {user?.role === "Admin" && (
               <Button onClick={handleAddNew}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add New Client
               </Button>
             )}
           </div>
-          <ClientDataTable 
-            columns={columns} 
-            data={displayedClients} 
+          <ClientDataTable
+            columns={columns}
+            data={displayedClients}
             meta={{
               handleEdit,
               handleDelete,
               handleStatusUpdate,
               handleViewDetails,
-              currentUserRole: user.role,
+              currentUserRole: user?.role,
             }}
           />
         </main>
@@ -140,15 +177,19 @@ const Index = () => {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[425px] md:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingClient ? "Edit Client" : "Add New Client"}</DialogTitle>
+            <DialogTitle>
+              {editingClient ? "Edit Client" : "Add New Client"}
+            </DialogTitle>
             <DialogDescription>
-              {editingClient ? "Update the client's details below." : "Fill in the new client's details."}
+              {editingClient
+                ? "Update the client's details below."
+                : "Fill in the new client's details."}
             </DialogDescription>
           </DialogHeader>
-          <ClientForm 
-            client={editingClient} 
-            onSubmit={handleFormSubmit} 
-            onCancel={() => setIsFormOpen(false)} 
+          <ClientForm
+            client={editingClient}
+            onSubmit={handleFormSubmit}
+            onCancel={() => setIsFormOpen(false)}
           />
         </DialogContent>
       </Dialog>
@@ -160,6 +201,6 @@ const Index = () => {
       </Dialog>
     </div>
   );
-}
+};
 
 export default Index;

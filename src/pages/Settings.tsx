@@ -42,7 +42,7 @@ const DynamicFieldManager = ({ title, description, options }: { title: string, d
 const Settings = () => {
   const { user } = useAuth();
 
-  if (user.role !== "Admin") {
+  if (user?.role !== "Admin") {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
