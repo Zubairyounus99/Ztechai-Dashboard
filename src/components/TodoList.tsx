@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import AddTodoForm from "./AddTodoForm";
 import TodoItem from "./TodoItem";
 import AiSummary from "./AiSummary";
+import TodoControls from "./TodoControls";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Todo } from "@/types";
+import { isToday, startOfDay } from "date-fns";
 
 const TodoList = () => {
   const [todos, setTodos] = useState<Todo[]>(() => {
@@ -23,6 +25,9 @@ const TodoList = () => {
       return [];
     }
   });
+
+  const [filter, setFilter] = useState<'all' | 'today' | 'overdue'>('all');
+  const [sortBy, setSortBy] = useState<'createdAt' | 'dueDate'>('createdAt');
 
   useEffect(() => {
     window.localStorage.setItem("todos", JSON.stringify(todos));
@@ -59,8 +64,35 @@ const TodoList = () => {
     );
   };
 
-  const pendingTodos = todos.filter(todo => !todo.completed);
-  const completedTodos = todos.filter(todo => todo.completed);
+  const processedTodos = useMemo(() => {
+    const todayStart = startOfDay(new Date());
+
+    return todos
+      .filter(todo => {
+        if (filter === 'all') return true;
+        if (filter === 'today') {
+          return todo.dueDate && isToday(new Date(todo.dueDate));
+        }
+        if (filter === 'overdue') {
+          return todo.dueDate && new Date(todo.dueDate) < todayStart && !todo.completed;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'createdAt') {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+        if (sortBy === 'dueDate') {
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        }
+        return 0;
+      });
+  }, [todos, filter, sortBy]);
+
+  const pendingTodos = processedTodos.filter(todo => !todo.completed);
+  const completedTodos = processedTodos.filter(todo => todo.completed);
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -71,6 +103,7 @@ const TodoList = () => {
         </CardHeader>
         <CardContent>
           <AddTodoForm addTodo={addTodo} />
+          <TodoControls filter={filter} setFilter={setFilter} sortBy={sortBy} setSortBy={setSortBy} />
           <div className="mt-4">
             <h3 className="text-lg font-semibold mb-2">Pending</h3>
             {pendingTodos.length > 0 ? (
@@ -84,7 +117,7 @@ const TodoList = () => {
                 />
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">No pending tasks. Well done!</p>
+              <p className="text-sm text-muted-foreground">No pending tasks match your filters.</p>
             )}
           </div>
           <div className="mt-6">
@@ -100,7 +133,7 @@ const TodoList = () => {
                 />
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">No tasks completed yet.</p>
+              <p className="text-sm text-muted-foreground">No completed tasks match your filters.</p>
             )}
           </div>
         </CardContent>
