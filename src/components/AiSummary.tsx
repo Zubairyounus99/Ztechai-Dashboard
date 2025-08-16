@@ -9,8 +9,8 @@ interface AiSummaryProps {
 
 const AiSummary = ({ todos }: AiSummaryProps) => {
   const pendingTodos = todos.filter((todo) => !todo.completed);
-  const highPriorityCount = pendingTodos.filter(
-    (todo) => todo.priority === "High"
+  const dueTodayCount = pendingTodos.filter(
+    (todo) => todo.dueDate && isToday(new Date(todo.dueDate))
   ).length;
   const overdueCount = pendingTodos.filter(
     (todo) =>
@@ -25,19 +25,15 @@ const AiSummary = ({ todos }: AiSummaryProps) => {
   if (todos.length > 0) {
     if (pendingCount > 0) {
       summary = `You have ${pendingCount} pending tasks.`;
-      if (highPriorityCount > 0) {
-        summary += ` ${highPriorityCount} ${
-          highPriorityCount > 1 ? "are" : "is"
-        } high priority.`;
+      if (dueTodayCount > 0) {
+        summary += ` ${dueTodayCount} ${
+          dueTodayCount > 1 ? "are" : "is"
+        } due today.`;
       }
       if (overdueCount > 0) {
-        summary += ` Watch out for ${overdueCount} overdue ${
-          overdueCount > 1 ? "tasks" : "task"
-        }!`;
-      }
-      const nextHighPriority = pendingTodos.find(t => t.priority === 'High');
-      if (nextHighPriority) {
-        summary += ` Your top priority is: "${nextHighPriority.text}".`
+        summary += ` ${overdueCount} ${
+          overdueCount > 1 ? "are" : "is"
+        } overdue!`;
       }
     } else {
       summary = "Great job! All tasks are completed.";

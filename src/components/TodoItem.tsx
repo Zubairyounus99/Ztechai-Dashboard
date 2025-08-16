@@ -6,7 +6,6 @@ import { Pencil, Trash, Save } from "lucide-react";
 import { Todo } from "@/types";
 import { format, isPast, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 interface TodoItemProps {
   todo: Todo;
@@ -14,12 +13,6 @@ interface TodoItemProps {
   deleteTodo: (id: number) => void;
   editTodo: (id: number, text: string) => void;
 }
-
-const priorityVariantMap = {
-  High: "destructive",
-  Medium: "secondary",
-  Low: "outline",
-} as const;
 
 const TodoItem = ({ todo, toggleTodo, deleteTodo, editTodo }: TodoItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -59,23 +52,19 @@ const TodoItem = ({ todo, toggleTodo, deleteTodo, editTodo }: TodoItemProps) => 
             >
               {todo.text}
             </label>
-            <div className="flex items-center gap-2 mt-1">
-              {dueDateText && (
-                <span className={cn("text-xs font-semibold", 
-                  isOverdue ? "text-red-500" : 
-                  isDueToday ? "text-blue-500" : 
-                  "text-muted-foreground"
-                )}>
-                  {dueDateText}
-                </span>
-              )}
-              {todo.category && <Badge variant="secondary">{todo.category}</Badge>}
-            </div>
+            {dueDateText && (
+              <span className={cn("text-xs font-semibold", 
+                isOverdue ? "text-red-500" : 
+                isDueToday ? "text-blue-500" : 
+                "text-muted-foreground"
+              )}>
+                {dueDateText}
+              </span>
+            )}
           </div>
         )}
       </div>
-      <div className="flex items-center gap-1">
-        <Badge variant={priorityVariantMap[todo.priority]}>{todo.priority}</Badge>
+      <div className="flex gap-1">
         {isEditing ? (
           <Button variant="ghost" size="icon" onClick={handleSave}>
             <Save className="h-4 w-4" />

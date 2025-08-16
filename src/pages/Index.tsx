@@ -1,204 +1,21 @@
-import { useState, useEffect, useMemo } from "react";
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { Client, ProjectStatus, Status } from "@/types";
-import { mockClients } from "@/data/mock";
-import { getColumns } from "@/components/columns";
-import { ClientDataTable } from "@/components/ClientDataTable";
-import { Button } from "@/components/ui/button";
-import { PlusCircle, Settings, LogOut } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { ClientForm } from "@/components/ClientForm";
-import { formatISO } from "date-fns";
-import { DashboardStats } from "@/components/DashboardStats";
-import { useAuth } from "@/context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
-import { ThemeSwitcher } from "@/components/ThemeSwitcher";
-import { ClientDetailView } from "@/components/ClientDetailView";
+import TodoList from "@/components/TodoList";
 
 const Index = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [clients, setClients] = useState<Client[]>(() => {
-    try {
-      const localClients = window.localStorage.getItem("clients");
-      return localClients ? JSON.parse(localClients) : mockClients;
-    } catch (error) {
-      console.error("Failed to parse clients from localStorage", error);
-      return mockClients;
-    }
-  });
-
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [editingClient, setEditingClient] = useState<Client | undefined>(
-    undefined,
-  );
-  const [viewingClient, setViewingClient] = useState<Client | undefined>(
-    undefined,
-  );
-
-  useEffect(() => {
-    window.localStorage.setItem("clients", JSON.stringify(clients));
-  }, [clients]);
-
-  const handleAddNew = () => {
-    setEditingClient(undefined);
-    setIsFormOpen(true);
-  };
-
-  const handleEdit = (client: Client) => {
-    setEditingClient(client);
-    setIsFormOpen(true);
-  };
-
-  const handleViewDetails = (client: Client) => {
-    setViewingClient(client);
-    setIsDetailOpen(true);
-  };
-
-  const handleDelete = (clientId: string) => {
-    if (window.confirm("Are you sure you want to delete this client?")) {
-      setClients(clients.filter((c) => c.id !== clientId));
-    }
-  };
-
-  const handleStatusUpdate = (
-    clientId: string,
-    newStatus: Status | ProjectStatus,
-    type: "status" | "projectStatus",
-  ) => {
-    setClients(
-      clients.map((c) =>
-        c.id === clientId
-          ? { ...c, [type]: newStatus, lastContact: formatISO(new Date()) }
-          : c,
-      ),
-    );
-  };
-
-  const handleFormSubmit = (data: Client) => {
-    if (editingClient) {
-      setClients(
-        clients.map((c) =>
-          c.id === data.id ? { ...data, lastContact: formatISO(new Date()) } : c,
-        ),
-      );
-    } else {
-      setClients([{ ...data, lastContact: formatISO(new Date()) }, ...clients]);
-    }
-    setIsFormOpen(false);
-    setEditingClient(undefined);
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-  };
-
-  const columns = useMemo(() => getColumns(), []);
-
-  const displayedClients = useMemo(() => {
-    if (user?.role === "Admin") {
-      return clients;
-    }
-    return clients.filter((client) => client.assignedTo === user?.id);
-  }, [clients, user]);
-
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 sm:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 sm:p-8">
       <div className="container mx-auto">
-        <header className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
-          <div className="text-center sm:text-left">
-            <h1 className="text-4xl font-bold tracking-tight">
-              ZTechAI Client Management
-            </h1>
-            <p className="text-xl text-muted-foreground mt-2">
-              Your central hub for managing client relationships and projects.
-            </p>
-          </div>
-          <div className="flex items-center justify-center sm:justify-end gap-2">
-            <span className="text-sm text-muted-foreground hidden sm:inline">
-              Welcome, {user?.name}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleLogout}
-              aria-label="Logout"
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
-            {user?.role === "Admin" && (
-              <Link to="/settings">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label="Application Settings"
-                >
-                  <Settings className="h-5 w-5" />
-                </Button>
-              </Link>
-            )}
-            <ThemeSwitcher />
-          </div>
+        <header className="text-center mb-8">
+          <h1 className="text-4xl font-bold tracking-tight">AI Agency Task Manager</h1>
+          <p className="text-xl text-muted-foreground mt-2">
+            Organize your day, track progress, and stay ahead.
+          </p>
         </header>
         <main>
-          <DashboardStats clients={displayedClients} />
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold">Client List</h2>
-            {user?.role === "Admin" && (
-              <Button onClick={handleAddNew}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add New Client
-              </Button>
-            )}
-          </div>
-          <ClientDataTable
-            columns={columns}
-            data={displayedClients}
-            meta={{
-              handleEdit,
-              handleDelete,
-              handleStatusUpdate,
-              handleViewDetails,
-              currentUserRole: user?.role,
-            }}
-          />
+          <TodoList />
         </main>
         <MadeWithDyad />
       </div>
-
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[425px] md:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingClient ? "Edit Client" : "Add New Client"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingClient
-                ? "Update the client's details below."
-                : "Fill in the new client's details."}
-            </DialogDescription>
-          </DialogHeader>
-          <ClientForm
-            client={editingClient}
-            onSubmit={handleFormSubmit}
-            onCancel={() => setIsFormOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-[425px] md:max-w-2xl">
-          {viewingClient && <ClientDetailView client={viewingClient} />}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
