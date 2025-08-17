@@ -8,7 +8,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 type FilterValue = "all" | "today" | "overdue";
-type SortValue = "dueDate" | "createdAt";
+type SortValue = "due_date" | "created_at";
 
 interface TodoControlsProps {
   filter: FilterValue;
@@ -35,8 +35,8 @@ const TodoControls = ({ filter, setFilter, sortBy, setSortBy }: TodoControlsProp
           <SelectValue placeholder="Sort by" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="dueDate">Due Date</SelectItem>
-          <SelectItem value="createdAt">Creation Date</SelectItem>
+          <SelectItem value="due_date">Due Date</SelectItem>
+          <SelectItem value="created_at">Creation Date</SelectItem>
         </SelectContent>
       </Select>
     </div>

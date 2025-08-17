@@ -13,15 +13,16 @@ import {
 
 interface AddTodoFormProps {
   addTodo: (text: string, dueDate?: Date) => void;
+  isAdding: boolean;
 }
 
-const AddTodoForm = ({ addTodo }: AddTodoFormProps) => {
+const AddTodoForm = ({ addTodo, isAdding }: AddTodoFormProps) => {
   const [text, setText] = useState("");
   const [date, setDate] = useState<Date | undefined>();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim()) return;
+    if (!text.trim() || isAdding) return;
     addTodo(text, date);
     setText("");
     setDate(undefined);
@@ -35,6 +36,7 @@ const AddTodoForm = ({ addTodo }: AddTodoFormProps) => {
         onChange={(e) => setText(e.target.value)}
         placeholder="Add a new task for your agency..."
         className="flex-grow"
+        disabled={isAdding}
       />
       <div className="flex gap-2">
         <Popover>
@@ -45,6 +47,7 @@ const AddTodoForm = ({ addTodo }: AddTodoFormProps) => {
                 "w-full flex-grow justify-start text-left font-normal",
                 !date && "text-muted-foreground"
               )}
+              disabled={isAdding}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {date ? format(date, "PPP") : <span>Pick a due date</span>}
@@ -59,7 +62,7 @@ const AddTodoForm = ({ addTodo }: AddTodoFormProps) => {
             />
           </PopoverContent>
         </Popover>
-        <Button type="submit" size="icon">
+        <Button type="submit" size="icon" disabled={isAdding}>
           <Plus className="h-4 w-4" />
         </Button>
       </div>

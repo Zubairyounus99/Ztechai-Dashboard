@@ -1,7 +1,8 @@
 export type Todo = {
-  id: number;
+  id: string;
+  user_id: string;
   text: string;
   completed: boolean;
-  createdAt: Date;
-  dueDate?: Date;
+  created_at: string;
+  due_date?: string | null;
 };

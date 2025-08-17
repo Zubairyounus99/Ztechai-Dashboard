@@ -1,67 +1,102 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import AddTodoForm from "./AddTodoForm";
 import TodoItem from "./TodoItem";
 import AiSummary from "./AiSummary";
 import TodoControls from "./TodoControls";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Todo } from "@/types";
-import { isToday, startOfDay } from "date-fns";
+import { isToday, startOfDay, parseISO } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
+import { showError, showSuccess } from "@/utils/toast";
+
+const getTodos = async (): Promise<Todo[]> => {
+  const { data, error } = await supabase
+    .from('todos')
+    .select('*');
+
+  if (error) {
+    showError("Failed to fetch tasks.");
+    throw new Error(error.message);
+  }
+  return data || [];
+};
 
 const TodoList = () => {
-  const [todos, setTodos] = useState<Todo[]>(() => {
-    try {
-      const localTodos = window.localStorage.getItem("todos");
-      return localTodos ? JSON.parse(localTodos).map((t: any) => ({
-        ...t, 
-        createdAt: new Date(t.createdAt),
-        dueDate: t.dueDate ? new Date(t.dueDate) : undefined,
-      })) : [
-        { id: 1, text: "Follow up with Client X", completed: false, createdAt: new Date(), dueDate: new Date(new Date().setDate(new Date().getDate() + 2)) },
-        { id: 2, text: "Review new AI model performance", completed: true, createdAt: new Date() },
-        { id: 3, text: "Schedule team sync for Project Y", completed: false, createdAt: new Date(), dueDate: new Date() },
-      ];
-    } catch (error) {
-      console.error("Failed to parse todos from localStorage", error);
-      return [];
-    }
+  const queryClient = useQueryClient();
+  const [filter, setFilter] = useState<'all' | 'today' | 'overdue'>('all');
+  const [sortBy, setSortBy] = useState<'created_at' | 'due_date'>('created_at');
+
+  const { data: todos = [], isLoading } = useQuery<Todo[]>({
+    queryKey: ['todos'],
+    queryFn: getTodos,
   });
 
-  const [filter, setFilter] = useState<'all' | 'today' | 'overdue'>('all');
-  const [sortBy, setSortBy] = useState<'createdAt' | 'dueDate'>('createdAt');
+  const addTodoMutation = useMutation({
+    mutationFn: async ({ text, dueDate }: { text: string, dueDate?: Date }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
 
-  useEffect(() => {
-    window.localStorage.setItem("todos", JSON.stringify(todos));
-  }, [todos]);
+      const newTodo = {
+        text,
+        user_id: session.user.id,
+        due_date: dueDate ? dueDate.toISOString() : undefined,
+      };
+
+      const { error } = await supabase.from('todos').insert([newTodo]);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      showSuccess("Task added!");
+    },
+    onError: () => {
+      showError("Failed to add task.");
+    },
+  });
+
+  const updateTodoMutation = useMutation({
+    mutationFn: async (updatedTodo: Partial<Todo> & { id: string }) => {
+      const { error } = await supabase.from('todos').update(updatedTodo).eq('id', updatedTodo.id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+    },
+    onError: () => {
+      showError("Failed to update task.");
+    },
+  });
+
+  const deleteTodoMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('todos').delete().eq('id', id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      showSuccess("Task deleted.");
+    },
+    onError: () => {
+      showError("Failed to delete task.");
+    },
+  });
 
   const addTodo = (text: string, dueDate?: Date) => {
-    const newTodo: Todo = {
-      id: Date.now(),
-      text,
-      completed: false,
-      createdAt: new Date(),
-      dueDate,
-    };
-    setTodos([newTodo, ...todos]);
+    addTodoMutation.mutate({ text, dueDate });
   };
 
-  const toggleTodo = (id: number) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
-    );
+  const toggleTodo = (id: string, completed: boolean) => {
+    updateTodoMutation.mutate({ id, completed });
   };
 
-  const deleteTodo = (id: number) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
+  const editTodo = (id: string, text: string) => {
+    updateTodoMutation.mutate({ id, text });
   };
 
-  const editTodo = (id: number, text: string) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, text } : todo
-      )
-    );
+  const deleteTodo = (id: string) => {
+    deleteTodoMutation.mutate(id);
   };
 
   const processedTodos = useMemo(() => {
@@ -70,22 +105,25 @@ const TodoList = () => {
     return todos
       .filter(todo => {
         if (filter === 'all') return true;
+        const dueDate = todo.due_date ? parseISO(todo.due_date) : null;
+        if (!dueDate) return false;
+
         if (filter === 'today') {
-          return todo.dueDate && isToday(new Date(todo.dueDate));
+          return isToday(dueDate);
         }
         if (filter === 'overdue') {
-          return todo.dueDate && new Date(todo.dueDate) < todayStart && !todo.completed;
+          return dueDate < todayStart && !todo.completed;
         }
         return true;
       })
       .sort((a, b) => {
-        if (sortBy === 'createdAt') {
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        if (sortBy === 'created_at') {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         }
-        if (sortBy === 'dueDate') {
-          if (!a.dueDate) return 1;
-          if (!b.dueDate) return -1;
-          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        if (sortBy === 'due_date') {
+          if (!a.due_date) return 1;
+          if (!b.due_date) return -1;
+          return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
         }
         return 0;
       });
@@ -93,6 +131,15 @@ const TodoList = () => {
 
   const pendingTodos = processedTodos.filter(todo => !todo.completed);
   const completedTodos = processedTodos.filter(todo => todo.completed);
+
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-2xl mx-auto space-y-4">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -102,8 +149,8 @@ const TodoList = () => {
           <CardTitle>My Agency Tasks</CardTitle>
         </CardHeader>
         <CardContent>
-          <AddTodoForm addTodo={addTodo} />
-          <TodoControls filter={filter} setFilter={setFilter} sortBy={sortBy} setSortBy={setSortBy} />
+          <AddTodoForm addTodo={addTodo} isAdding={addTodoMutation.isPending} />
+          <TodoControls filter={filter} setFilter={setFilter} sortBy={sortBy as any} setSortBy={setSortBy as any} />
           <div className="mt-4">
             <h3 className="text-lg font-semibold mb-2">Pending</h3>
             {pendingTodos.length > 0 ? (

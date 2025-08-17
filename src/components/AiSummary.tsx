@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Lightbulb } from "lucide-react";
-import { isToday, isPast } from "date-fns";
+import { isToday, isPast, parseISO } from "date-fns";
 import { Todo } from "@/types";
 
 interface AiSummaryProps {
@@ -10,13 +10,13 @@ interface AiSummaryProps {
 const AiSummary = ({ todos }: AiSummaryProps) => {
   const pendingTodos = todos.filter((todo) => !todo.completed);
   const dueTodayCount = pendingTodos.filter(
-    (todo) => todo.dueDate && isToday(new Date(todo.dueDate))
+    (todo) => todo.due_date && isToday(parseISO(todo.due_date))
   ).length;
   const overdueCount = pendingTodos.filter(
     (todo) =>
-      todo.dueDate &&
-      isPast(new Date(todo.dueDate)) &&
-      !isToday(new Date(todo.dueDate))
+      todo.due_date &&
+      isPast(parseISO(todo.due_date)) &&
+      !isToday(parseISO(todo.due_date))
   ).length;
 
   let summary = "No tasks for today yet. Time to plan your day!";

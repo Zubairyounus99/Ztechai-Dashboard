@@ -4,14 +4,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Pencil, Trash, Save } from "lucide-react";
 import { Todo } from "@/types";
-import { format, isPast, isToday } from "date-fns";
+import { format, isPast, isToday, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface TodoItemProps {
   todo: Todo;
-  toggleTodo: (id: number) => void;
-  deleteTodo: (id: number) => void;
-  editTodo: (id: number, text: string) => void;
+  toggleTodo: (id: string, completed: boolean) => void;
+  deleteTodo: (id: string) => void;
+  editTodo: (id: string, text: string) => void;
 }
 
 const TodoItem = ({ todo, toggleTodo, deleteTodo, editTodo }: TodoItemProps) => {
@@ -24,16 +24,17 @@ const TodoItem = ({ todo, toggleTodo, deleteTodo, editTodo }: TodoItemProps) => 
     setIsEditing(false);
   };
 
-  const dueDateText = todo.dueDate ? format(new Date(todo.dueDate), "PP") : null;
-  const isOverdue = todo.dueDate && isPast(new Date(todo.dueDate)) && !isToday(new Date(todo.dueDate)) && !todo.completed;
-  const isDueToday = todo.dueDate && isToday(new Date(todo.dueDate)) && !todo.completed;
+  const dueDate = todo.due_date ? parseISO(todo.due_date) : null;
+  const dueDateText = dueDate ? format(dueDate, "PP") : null;
+  const isOverdue = dueDate && isPast(dueDate) && !isToday(dueDate) && !todo.completed;
+  const isDueToday = dueDate && isToday(dueDate) && !todo.completed;
 
   return (
     <div className="flex items-center gap-4 p-2 border-b">
       <Checkbox
         id={`todo-${todo.id}`}
         checked={todo.completed}
-        onCheckedChange={() => toggleTodo(todo.id)}
+        onCheckedChange={(checked) => toggleTodo(todo.id, !!checked)}
       />
       <div className="flex-grow">
         {isEditing ? (
