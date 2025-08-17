@@ -20,9 +20,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { ClientDetailView } from "@/components/ClientDetailView";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/context/ProfileContext";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { profile } = useProfile();
   const [clients, setClients] = useState<Client[]>(() => {
     try {
       const localClients = window.localStorage.getItem("clients");
@@ -85,6 +87,7 @@ const Index = () => {
   };
 
   const columns = useMemo(() => getColumns(), []);
+  const currentUserRole = profile?.role || 'Employee';
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 sm:p-8">
@@ -97,11 +100,13 @@ const Index = () => {
             </p>
           </div>
           <div className="flex items-center justify-center sm:justify-end gap-2">
-            <Link to="/settings">
-              <Button variant="outline" size="icon" aria-label="Application Settings">
-                <Settings className="h-5 w-5" />
-              </Button>
-            </Link>
+            {currentUserRole === 'Admin' && (
+              <Link to="/settings">
+                <Button variant="outline" size="icon" aria-label="Application Settings">
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </Link>
+            )}
             <ThemeSwitcher />
             <Button variant="outline" size="icon" aria-label="Sign Out" onClick={handleSignOut}>
               <LogOut className="h-5 w-5" />
@@ -112,10 +117,12 @@ const Index = () => {
           <DashboardStats clients={clients} />
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold">Client List</h2>
-            <Button onClick={handleAddNew}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add New Client
-            </Button>
+            {currentUserRole === 'Admin' && (
+              <Button onClick={handleAddNew}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Client
+              </Button>
+            )}
           </div>
           <ClientDataTable 
             columns={columns} 
@@ -125,7 +132,7 @@ const Index = () => {
               handleDelete,
               handleStatusUpdate,
               handleViewDetails,
-              currentUserRole: "Admin", // Temporarily hardcoded until roles are implemented
+              currentUserRole: currentUserRole,
             }}
           />
         </main>
