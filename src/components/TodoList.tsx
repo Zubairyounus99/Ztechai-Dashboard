@@ -10,7 +10,6 @@ import TodoItem from "./TodoItem";
 import TodoControls from "./TodoControls";
 import AiSummary from "./AiSummary";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getCurrentSession } from "@/utils/auth";
 
 type FilterValue = "all" | "today" | "overdue";
 type SortValue = "due_date" | "created_at";
@@ -23,15 +22,9 @@ const TodoList = () => {
   const { data: todos = [], isLoading, isError } = useQuery<Todo[]>({
     queryKey: ["todos"],
     queryFn: async () => {
-      const session = await getCurrentSession();
-      if (!session) {
-        throw new Error("Not authenticated");
-      }
-
       const { data, error } = await supabase
         .from("todos")
         .select("*")
-        .eq("user_id", session.user.id)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -74,9 +67,7 @@ const TodoList = () => {
 
   const addTodoMutation = useMutation({
     mutationFn: async ({ text, dueDate }: { text: string; dueDate?: Date }) => {
-      const session = await getCurrentSession();
-      if (!session) throw new Error("Not authenticated");
-      const { error } = await supabase.from("todos").insert([{ text, user_id: session.user.id, due_date: dueDate?.toISOString() }]);
+      const { error } = await supabase.from("todos").insert([{ text, due_date: dueDate?.toISOString() }]);
       if (error) throw error;
     },
     ...mutationOptions,
