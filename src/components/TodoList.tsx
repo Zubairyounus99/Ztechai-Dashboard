@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Todo } from "@/types";
@@ -34,6 +34,23 @@ const TodoList = () => {
     },
   });
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('realtime-todos')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'todos' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['todos'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const filteredAndSortedTodos = useMemo(() => {
     let filtered = [...todos];
 
@@ -58,7 +75,7 @@ const TodoList = () => {
 
   const mutationOptions = {
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["todos"] });
+      // No need to invalidate here, the realtime subscription will handle it
     },
     onError: (error: Error) => {
       showError(error.message || "An error occurred.");
