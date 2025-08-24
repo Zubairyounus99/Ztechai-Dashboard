@@ -1,4 +1,4 @@
-import { safeSupabase as supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Session } from '@supabase/supabase-js';
@@ -32,14 +32,9 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        try {
-          setSession(session);
-          if (!session && event !== 'INITIAL_SESSION') {
-            navigate('/login');
-          }
-        } catch (error) {
-          showError('Authentication error occurred');
+      (event, session) => {
+        setSession(session);
+        if (!session && event !== 'INITIAL_SESSION') {
           navigate('/login');
         }
       }

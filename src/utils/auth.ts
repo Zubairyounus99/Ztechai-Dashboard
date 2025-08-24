@@ -1,9 +1,10 @@
-import { safeSupabase as supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { showError } from './toast';
+import { Session } from '@supabase/supabase-js';
 
-export const handleAuthError = (error: any) => {
+export const handleAuthError = (error: { message: any; }) => {
   console.error('Auth error:', error);
-  showError('Authentication error. Please try again.');
+  showError(error.message || 'Authentication error. Please try again.');
   return null;
 };
 
@@ -13,18 +14,17 @@ export const refreshSession = async () => {
     if (error) throw error;
     return data;
   } catch (error) {
-    return handleAuthError(error);
+    return handleAuthError(error as Error);
   }
 };
 
-export const getCurrentSession = async () => {
-  try {
-    const { data, error } = await supabase.auth.getSession();
-    if (error) throw error;
-    return data.session;
-  } catch (error) {
-    return handleAuthError(error);
+export const getCurrentSession = async (): Promise<Session | null> => {
+  const { data, error } = await supabase.auth.getSession();
+  if (error) {
+    handleAuthError(error);
+    throw error;
   }
+  return data.session;
 };
 
 export const signOut = async () => {
@@ -33,7 +33,7 @@ export const signOut = async () => {
     if (error) throw error;
     return true;
   } catch (error) {
-    handleAuthError(error);
+    handleAuthError(error as Error);
     return false;
   }
 };

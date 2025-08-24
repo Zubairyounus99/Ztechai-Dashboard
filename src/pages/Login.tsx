@@ -1,6 +1,6 @@
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { safeSupabase as supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { showError } from '@/utils/toast';
@@ -10,13 +10,9 @@ const Login = () => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        try {
-          if (session) {
-            navigate('/');
-          }
-        } catch (error) {
-          showError('Authentication error. Please try again.');
+      (event, session) => {
+        if (session) {
+          navigate('/');
         }
       }
     );
